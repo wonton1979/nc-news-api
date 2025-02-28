@@ -1,6 +1,6 @@
 const db = require("../connection");
 const format = require('pg-format');
-const convertTimestampToDate = require('./utils.js');
+const {convertTimestampToDate,linkedID} = require('./utils.js');
 
 const seed = ({ topicData, userData, articleData, commentData }) => {
   return db
@@ -90,7 +90,10 @@ function createComments(commentData) {
              votes      INT DEFAULT 0
          );`
     ).then(() => {
-        const formattedData = commentData.map(
+        return db.query("SELECT * FROM articles")
+    }).then((res) => {
+        const linkedData = linkedID(res.rows,commentData,'title','article_title','article_id');
+        const formattedData = linkedData.map(
             ({article_id,author,body,created_at,votes}) => {
                 return [article_id,author,body,convertTimestampToDate(created_at)['created_at'],votes];
             })
