@@ -71,7 +71,7 @@ function createArticles(articleData) {
     ).then(() => {
         const formattedData = articleData.map(
             ({ title,topic,author,body,created_at,votes,article_img_url}) => {
-                return [title,topic,author,body,convertTimestampToDate(created_at)['created_at'],votes,article_img_url];
+                return [title,topic,author,body,convertTimestampToDate({created_at})['created_at'],votes,article_img_url];
             })
         const SQLquery = format(`INSERT INTO articles(title,topic,author,body,created_at,votes,article_img_url) VALUES %L RETURNING *`, formattedData);
         return db.query(SQLquery);
@@ -90,12 +90,12 @@ function createComments(commentData) {
              votes      INT DEFAULT 0
          );`
     ).then(() => {
-        return db.query("SELECT * FROM articles")
+        return db.query("SELECT * FROM articles");
     }).then((res) => {
         const linkedData = linkedID(res.rows,commentData,'title','article_title','article_id');
         const formattedData = linkedData.map(
             ({article_id,author,body,created_at,votes}) => {
-                return [article_id,author,body,convertTimestampToDate(created_at)['created_at'],votes];
+                return [article_id,author,body,convertTimestampToDate({created_at})['created_at'],votes];
             })
         const SQLquery = format(`INSERT INTO comments(article_id,author,body,created_at,votes) VALUES %L RETURNING *`, formattedData);
         return db.query(SQLquery);
