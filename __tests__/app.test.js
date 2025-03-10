@@ -26,3 +26,36 @@ describe("GET /api", () => {
       });
   });
 });
+
+describe("GET /api/topics", () => {
+    describe("Functionality Test", () => {
+        test("200: Responds with an array of object which list of all available topics", () => {
+            return request(app)
+                .get("/api/topics")
+                .expect(200)
+                .then(({body}) => {
+                    console.log(body);
+                    expect(body.owners.length).toBe(3);
+                    body.owners.forEach(topic => {
+                        expect(typeof topic.slug).toBe('string')
+                        expect(typeof topic.description).toBe('string')
+                        expect(typeof topic.img_url).toBe('string')
+                    })
+                });
+        });
+    })
+
+    describe.only("Error Handling Test", () => {
+        test("GET 404: Testing if no topic at all",()=>{
+            return db.query("DELETE * FROM topics", (res) => {
+
+            })
+            return request(app)
+                .get("/api/topics")
+                .expect(404)
+                .then(({body})=>{
+                    expect(body.msg).toBe('Not Found');
+                })
+        })
+    })
+});
