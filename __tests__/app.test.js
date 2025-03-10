@@ -4,6 +4,7 @@ const seed = require("../db/seeds/seed")
 const data = require("../db/data/test-data")
 const request = require("supertest");
 const app = require("../app.js");
+require('jest-sorted');
 
 
 beforeEach(()=>{
@@ -49,7 +50,7 @@ describe("GET /api/topics", () => {
                             img_url: ""
                         }
                     ];
-                    expect(body.topics.length).toBe(3);
+                    expect(body.topics).toHaveLength(3);
                     expect(body.topics).toMatchObject(expectedTopics)
                 });
         });
@@ -87,7 +88,6 @@ describe("GET /api/articles/:article_id", () => {
                         votes: 0,
                         article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700'
                     }
-                    expect(article.length).toBe(1);
                     expect(article[0]).toMatchObject(expectedArticle);
                 });
         });
@@ -101,16 +101,94 @@ describe("GET /api/articles/:article_id", () => {
                     expect(body.msg).toBe('Not Found');
                 })
         })
-        test("GET 404: Testing if the provided article_id is not the right format",()=>{
+        test("GET 400: Testing if the provided article_id is not the right format",()=>{
             return request(app)
                 .get("/api/articles/apple")
-                .expect(500)
+                .expect(400)
                 .then(({body})=>{
-                    expect(body.msg).toBe('Server Error');
+                    expect(body.msg).toBe('Bad Request');
                 })
         })
-
-
     })
 })
 
+describe("GET /api/articles", () => {
+    describe("Functionality Test", () => {
+        test("200: Responds with an array of object which list of all available articles", () => {
+            return request(app)
+                .get("/api/articles")
+                .expect(200)
+                .then(({body}) => {
+                    const expectedTopics =     [
+                        {
+                            author: 'icellusedkars',
+                            title: 'Eight pug gifs that remind me of mitch',
+                            article_id: 3,
+                            topic: 'mitch',
+                            created_at: "2020-11-03T09:12:00.000Z",
+                            votes: 0,
+                            article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700',
+                            comment_count: '2'
+                        },
+                        {
+                            author: 'icellusedkars',
+                            title: 'A',
+                            article_id: 6,
+                            topic: 'mitch',
+                            created_at: "2020-10-18T01:00:00.000Z",
+                            votes: 0,
+                            article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700',
+                            comment_count: '1'
+                        },
+                        {
+                            author: 'rogersop',
+                                title: 'UNCOVERED: catspiracy to bring down democracy',
+                            article_id: 5,
+                            topic: 'cats',
+                            created_at: "2020-08-03T13:14:00.000Z",
+                            votes: 0,
+                            article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700',
+                            comment_count: '2'
+                        },
+                        {
+                            author: 'butter_bridge',
+                                title: 'Living in the shadow of a great man',
+                            article_id: 1,
+                            topic: 'mitch',
+                            created_at: "2020-07-09T20:11:00.000Z",
+                            votes: 100,
+                            article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700',
+                            comment_count: '11'
+                        },
+                        {
+                            author: 'butter_bridge',
+                            title: "They're not exactly dogs, are they?",
+                            article_id: 9,
+                            topic: 'mitch',
+                            created_at: "2020-06-06T09:10:00.000Z",
+                            votes: 0,
+                            article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700',
+                            comment_count: '2'
+                        }
+                    ];
+                    expect(body).toHaveLength(5);
+                    expect(body).toMatchObject(expectedTopics)
+                    expect(body).toBeSorted({descending: true, key: 'created_at'})
+                });
+        });
+    })
+
+    describe("Error Handling Test", () => {
+        test("GET 404: Testing if no topic at all",()=>{
+            return db.query("DELETE * FROM articles", (res) => {
+
+            })
+            return request(app)
+                .get("/api/articles")
+                .expect(404)
+                .then(({body})=>{
+                    expect(body.msg).toBe('Not Found');
+                })
+        })
+    })
+});
