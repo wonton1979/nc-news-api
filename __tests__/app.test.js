@@ -4,6 +4,7 @@ const seed = require("../db/seeds/seed")
 const data = require("../db/data/test-data")
 const request = require("supertest");
 const app = require("../app.js");
+const {expectedTopics} = require("./expectedData");
 require('jest-sorted');
 
 
@@ -92,6 +93,7 @@ describe("GET /api/articles/:article_id", () => {
                 });
         });
     })
+
     describe("Error Handling Test", () => {
         test("GET 404: Testing if no article found which related to the article_id",()=>{
             return request(app)
@@ -119,58 +121,6 @@ describe("GET /api/articles", () => {
                 .get("/api/articles")
                 .expect(200)
                 .then(({body}) => {
-                    const expectedTopics =     [
-                        {
-                            author: 'icellusedkars',
-                            title: 'Eight pug gifs that remind me of mitch',
-                            article_id: 3,
-                            topic: 'mitch',
-                            created_at: "2020-11-03T09:12:00.000Z",
-                            votes: 0,
-                            article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700',
-                            comment_count: '2'
-                        },
-                        {
-                            author: 'icellusedkars',
-                            title: 'A',
-                            article_id: 6,
-                            topic: 'mitch',
-                            created_at: "2020-10-18T01:00:00.000Z",
-                            votes: 0,
-                            article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700',
-                            comment_count: '1'
-                        },
-                        {
-                            author: 'rogersop',
-                                title: 'UNCOVERED: catspiracy to bring down democracy',
-                            article_id: 5,
-                            topic: 'cats',
-                            created_at: "2020-08-03T13:14:00.000Z",
-                            votes: 0,
-                            article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700',
-                            comment_count: '2'
-                        },
-                        {
-                            author: 'butter_bridge',
-                                title: 'Living in the shadow of a great man',
-                            article_id: 1,
-                            topic: 'mitch',
-                            created_at: "2020-07-09T20:11:00.000Z",
-                            votes: 100,
-                            article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700',
-                            comment_count: '11'
-                        },
-                        {
-                            author: 'butter_bridge',
-                            title: "They're not exactly dogs, are they?",
-                            article_id: 9,
-                            topic: 'mitch',
-                            created_at: "2020-06-06T09:10:00.000Z",
-                            votes: 0,
-                            article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700',
-                            comment_count: '2'
-                        }
-                    ];
                     expect(body).toHaveLength(5);
                     expect(body).toMatchObject(expectedTopics)
                     expect(body).toBeSorted({descending: true, key: 'created_at'})
@@ -192,3 +142,53 @@ describe("GET /api/articles", () => {
         })
     })
 });
+
+describe("GET /api/articles/:article_id/comments", () => {
+    describe("Functionality Test", () => {
+        test("200: Responds with an array of comments for the given article_id", () => {
+            return request(app)
+                .get("/api/articles/3/comments")
+                .expect(200)
+                .then(({body:{comments}}) => {
+                    const expectedArticle =     [
+                        {
+                            comment_id: 11,
+                            article_id: 3,
+                            author: 'icellusedkars',
+                            body: 'Ambidextrous marsupial',
+                            created_at: "2020-09-19T23:10:00.000Z",
+                        votes: 0
+                        },
+                        {
+                            comment_id: 10,
+                                article_id: 3,
+                            author: 'icellusedkars',
+                            body: 'git push origin master',
+                            created_at: "2020-06-20T07:24:00.000Z",
+                            votes: 0
+                        }]
+                    expect(comments).toHaveLength(2);
+                    expect(comments).toMatchObject(expectedArticle);
+                    expect(comments).toBeSorted({descending: true, key: 'created_at'})
+                });
+        });
+    })
+    describe("Error Handling Test", () => {
+        test("GET 404: Testing if no article found which related to the article_id",()=>{
+            return request(app)
+                .get("/api/articles/9999/comments")
+                .expect(404)
+                .then(({body})=>{
+                    expect(body.msg).toBe('Not Found');
+                })
+        })
+        test("GET 400: Testing if the provided article_id is not the right format",()=>{
+            return request(app)
+                .get("/api/articles/apple/comments")
+                .expect(400)
+                .then(({body})=>{
+                    expect(body.msg).toBe('Bad Request');
+                })
+        })
+    })
+})
