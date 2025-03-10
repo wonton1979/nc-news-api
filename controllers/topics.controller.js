@@ -1,14 +1,10 @@
 const {fetchAllTopics} = require("../models/topics.model")
 
-function getAllTopics(request, response) {
+function getAllTopics(request, response, next) {
     fetchAllTopics().then((data) => {
-        if ((data).length > 0) {
-            response.status(200).send({ owners: data });
-        }
-        else
-        {
-            response.status(404).send({msg:"Owners Not Found"});
-        }
+        response.status(200).send({ topics: data });
+    }).catch(error => {
+        next(error)
     });
 }
 
