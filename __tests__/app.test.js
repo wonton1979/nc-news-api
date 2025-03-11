@@ -100,7 +100,7 @@ describe("GET /api/articles/:article_id", () => {
                 .get("/api/articles/9999")
                 .expect(404)
                 .then(({body})=>{
-                    expect(body.msg).toBe('Not Found');
+                    expect(body.msg).toBe('No articles found with this id.');
                 })
         })
         test("GET 400: Testing if the provided article_id is not the right format",()=>{
@@ -150,26 +150,36 @@ describe("GET /api/articles/:article_id/comments", () => {
                 .get("/api/articles/3/comments")
                 .expect(200)
                 .then(({body:{comments}}) => {
-                    const expectedArticle =     [
+                    const expectedComments =     [
                         {
                             comment_id: 11,
                             article_id: 3,
                             author: 'icellusedkars',
                             body: 'Ambidextrous marsupial',
                             created_at: "2020-09-19T23:10:00.000Z",
-                        votes: 0
+                            votes: 0
                         },
                         {
                             comment_id: 10,
-                                article_id: 3,
+                            article_id: 3,
                             author: 'icellusedkars',
                             body: 'git push origin master',
                             created_at: "2020-06-20T07:24:00.000Z",
                             votes: 0
                         }]
                     expect(comments).toHaveLength(2);
-                    expect(comments).toMatchObject(expectedArticle);
+                    expect(comments).toMatchObject(expectedComments);
                     expect(comments).toBeSorted({descending: true, key: 'created_at'})
+                });
+        });
+
+        test("200: Responds with an empty array if article is exist but no comment found related to this article", () => {
+            return request(app)
+                .get("/api/articles/2/comments")
+                .expect(200)
+                .then(({body:{comments}}) => {
+                    expect(comments).toHaveLength(0);
+                    expect(comments).toMatchObject([]);
                 });
         });
     })
@@ -179,7 +189,7 @@ describe("GET /api/articles/:article_id/comments", () => {
                 .get("/api/articles/9999/comments")
                 .expect(404)
                 .then(({body})=>{
-                    expect(body.msg).toBe('Not Found');
+                    expect(body.msg).toBe('No articles found with this id.');
                 })
         })
         test("GET 400: Testing if the provided article_id is not the right format",()=>{
@@ -188,6 +198,53 @@ describe("GET /api/articles/:article_id/comments", () => {
                 .expect(400)
                 .then(({body})=>{
                     expect(body.msg).toBe('Bad Request');
+                })
+        })
+    })
+})
+
+describe("POST /api/articles/:article_id/comments", () => {
+    describe("Functionality Test", () => {
+        test("201 : Post new comment to the specific article_id",()=>{
+            return request(app)
+                .post("/api/articles/2/comments")
+                .send({username: 'rogersop',body: 'It is cold outside!'})
+                .expect(201)
+                .then(({body:{new_comment}})=>{
+                    expect(new_comment.author).toBe('rogersop');
+                    expect(new_comment.body).toBe('It is cold outside!');
+                    expect(new_comment.article_id).toBe(2);
+                    expect(new_comment.votes).toBe(0);
+                    expect(typeof new_comment.created_at).toBe("string");
+                    });
+                })
+        })
+
+    describe("Error Handling Test", () => {
+        test("GET 404: Testing if no article found which related to the article_id",()=>{
+            return request(app)
+                .post("/api/articles/9999/comments")
+                .send({username: 'rogersop',body: 'It is so cold outside!'})
+                .expect(404)
+                .then(({body})=>{
+                    expect(body.msg).toBe('No articles found with this id.');
+                })
+        })
+        test("GET 400: Testing if the provided article_id is not the right format",()=>{
+            return request(app)
+                .get("/api/articles/apple/comments")
+                .expect(400)
+                .then(({body})=>{
+                    expect(body.msg).toBe('Bad Request');
+                })
+        })
+        test("GET 404: Testing if username is not exist",()=>{
+            return request(app)
+                .post("/api/articles/2/comments")
+                .send({username: 'wonton79',body: 'It is so cold outside!'})
+                .expect(404)
+                .then(({body})=>{
+                    expect(body.msg).toBe('This user does not exist');
                 })
         })
     })
