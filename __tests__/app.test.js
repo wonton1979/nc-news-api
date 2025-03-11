@@ -323,3 +323,36 @@ describe("PATCH /api/articles/:article_id/      | Update article votes if articl
         })
     })
 })
+
+describe("DELETE /api/comments/:comment_id", () => {
+    describe("Functionality Test", () => {
+        test("204 : Delete comment by using comment id",()=>{
+            return request(app)
+                .delete("/api/comments/2")
+                .expect(204)
+                .then(({body})=> {
+                    expect(body).toMatchObject({});
+                })
+        })
+    })
+    describe("Error Handling Test", () => {
+        test("DELETE 404: Testing if no comment found which related to the comment_id", () => {
+            return request(app)
+                .delete("/api/comments/9999")
+                .expect(404)
+                .then(({body}) => {
+                    console.log(body);
+                    expect(body.msg).toBe('No comment found with this id.');
+                })
+        })
+        test("DELETE 404: Testing if data type of comment_id passed in is wrong", () => {
+            return request(app)
+                .delete("/api/comments/apple")
+                .expect(400)
+                .then(({body}) => {
+                    console.log(body);
+                    expect(body.msg).toBe('Bad Request');
+                })
+        })
+    })
+})
