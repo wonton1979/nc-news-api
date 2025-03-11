@@ -8,5 +8,4 @@ exports.fetchUserByUsername = (username) => {
         }
         return rows;
     })
-
 }

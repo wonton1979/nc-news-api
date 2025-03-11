@@ -3,8 +3,17 @@ const {fetchArticleById} = require("./articles.model");
 const {convertTimestampToDate} = require('../db/seeds/utils.js');
 const {fetchUserByUsername} = require("./users.model");
 
+function fetchCommentByCommentId (commentID) {
 
-exports.fetchCommentsByArticleId = (articleId) => {
+    return db.query("SELECT * from comments where comment_id = $1",[commentID]).then(({rows})=>{
+        if(rows.length === 0){
+            return Promise.reject({status:404,msg: "No comment found with this id."})
+        }
+        return rows;
+    })
+}
+
+function fetchCommentsByArticleId (articleId) {
     return fetchArticleById(articleId).then((article) => {
         if (article.length !== 0) {
             return db.query("SELECT * from comments where article_id = $1 ORDER BY created_at DESC",[articleId]).then(({rows})=>{
@@ -15,7 +24,7 @@ exports.fetchCommentsByArticleId = (articleId) => {
 }
 
 
-exports.insertCommentsByArticleId = (article_id,queryBody) => {
+function insertCommentsByArticleId (article_id,queryBody){
     const {username,body} = queryBody;
     if(typeof username !== "string" || typeof body !== "string" ){
         return Promise.reject({status:400,msg: "Bad Request"});
@@ -33,6 +42,17 @@ exports.insertCommentsByArticleId = (article_id,queryBody) => {
             }
         })
     }
-
-
 }
+
+
+function dropCommentByCommentId (commentId) {
+    return fetchCommentByCommentId(commentId).then((rows) => {
+        return db.query("DELETE FROM comments WHERE comment_id = $1 RETURNING *",[commentId]).then(({rows})=>{
+            return rows;
+        })
+    })
+}
+
+
+
+module.exports = {fetchCommentsByArticleId,insertCommentsByArticleId,dropCommentByCommentId};

@@ -1,4 +1,4 @@
-const {fetchCommentsByArticleId,insertCommentsByArticleId} = require('../models/comments.model')
+const {fetchCommentsByArticleId,insertCommentsByArticleId,dropCommentByCommentId} = require('../models/comments.model')
 
 
 exports.getCommentsByArticleId = (request, response,next) => {
@@ -17,4 +17,13 @@ exports.postCommentsByArticleId = (request, response, next) => {
     }).catch((error)=>{
         next(error);
     });
+}
+
+exports.deleteCommentByCommentId = (request, response,next) => {
+    const {comment_id} = request.params;
+    dropCommentByCommentId(comment_id).then((comment)=>{
+        response.status(204).send()
+    }).catch((error)=>{
+        next(error);
+    })
 }
