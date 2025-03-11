@@ -321,6 +321,15 @@ describe("PATCH /api/articles/:article_id/      | Update article votes if articl
                     expect(body.msg).toBe('Bad Request');
                 })
         })
+        test("GET 404: Testing if inc_votes is missing",()=>{
+            return request(app)
+                .patch("/api/articles/2")
+                .send({})
+                .expect(400)
+                .then(({body})=>{
+                    expect(body.msg).toBe('Bad Request');
+                })
+        })
     })
 })
 
@@ -341,7 +350,6 @@ describe("DELETE /api/comments/:comment_id", () => {
                 .delete("/api/comments/9999")
                 .expect(404)
                 .then(({body}) => {
-                    console.log(body);
                     expect(body.msg).toBe('No comment found with this id.');
                 })
         })
@@ -350,7 +358,6 @@ describe("DELETE /api/comments/:comment_id", () => {
                 .delete("/api/comments/apple")
                 .expect(400)
                 .then(({body}) => {
-                    console.log(body);
                     expect(body.msg).toBe('Bad Request');
                 })
         })
