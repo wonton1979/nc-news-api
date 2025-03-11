@@ -4,7 +4,7 @@ const seed = require("../db/seeds/seed")
 const data = require("../db/data/test-data")
 const request = require("supertest");
 const app = require("../app.js");
-const {expectedTopics} = require("./expectedData");
+const {expectedTopics,expectedUsers} = require("./expectedData");
 require('jest-sorted');
 
 
@@ -321,6 +321,15 @@ describe("PATCH /api/articles/:article_id/      | Update article votes if articl
                     expect(body.msg).toBe('Bad Request');
                 })
         })
+        test("GET 404: Testing if inc_votes is missing",()=>{
+            return request(app)
+                .patch("/api/articles/2")
+                .send({})
+                .expect(400)
+                .then(({body})=>{
+                    expect(body.msg).toBe('Bad Request');
+                })
+        })
     })
 })
 
@@ -341,7 +350,6 @@ describe("DELETE /api/comments/:comment_id", () => {
                 .delete("/api/comments/9999")
                 .expect(404)
                 .then(({body}) => {
-                    console.log(body);
                     expect(body.msg).toBe('No comment found with this id.');
                 })
         })
@@ -350,9 +358,36 @@ describe("DELETE /api/comments/:comment_id", () => {
                 .delete("/api/comments/apple")
                 .expect(400)
                 .then(({body}) => {
-                    console.log(body);
                     expect(body.msg).toBe('Bad Request');
                 })
         })
     })
 })
+
+
+describe("GET /api/users", () => {
+    describe("Functionality Test", () => {
+        test("200: Responds with an array of object which list of all users", () => {
+            return request(app)
+                .get("/api/users")
+                .expect(200)
+                .then(({body}) => {
+                    expect(body.users).toHaveLength(4);
+                    expect(body.users).toMatchObject(expectedUsers);
+                });
+        });
+    })
+
+    describe("Error Handling Test", () => {
+        test("GET 404: Testing if no topic at all",()=>{
+            return db.query("DELETE * FROM users", () => {
+            })
+            return request(app)
+                .get("/api/users")
+                .expect(404)
+                .then(({body})=>{
+                    expect(body.msg).toBe('Not Found');
+                })
+        })
+    })
+});

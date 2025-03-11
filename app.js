@@ -6,6 +6,7 @@ const {getArticleById,getAllArticles,patchArticleById} = require("./controllers/
 const {getApi} = require("./controllers/api.controller");
 const {customErrorController,serverErrorController,psqlErrorController} = require("./controllers/errors.controller");
 const {getCommentsByArticleId,postCommentsByArticleId,deleteCommentByCommentId} = require("./controllers/comments.controller");
+const {getAllUsers} = require("./controllers/users.controller");
 
 app.use(express.json());
 
@@ -24,6 +25,8 @@ app.post('/api/articles/:article_id/comments', postCommentsByArticleId);
 app.patch('/api/articles/:article_id', patchArticleById);
 
 app.delete("/api/comments/:comment_id",deleteCommentByCommentId)
+
+app.get("/api/users", getAllUsers);
 
 app.use(psqlErrorController);
 

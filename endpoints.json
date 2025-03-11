@@ -25,6 +25,7 @@
       }]
     }
   },
+
   "GET /api/articles": {
     "description": "serves an array of all articles",
     "queries": ["author", "topic", "sort_by", "order"],
@@ -75,5 +76,45 @@
         }
       ]
     }
+  },
+
+  "PATCH /api/articles/:article_id": {
+    "description": "serves an array of an article which the votes has been updated",
+    "queries": ["article_id"],
+    "exampleResponse": {
+      "new_comment": [
+        {
+          "article_id": 2,
+          "title": "Sony Vaio; or, The Laptop",
+          "topic": "mitch",
+          "author": "icellusedkars",
+          "body": "Call me Mitchell. Some years ago..",
+          "created_at": "2020-10-16T05:03:00.000Z",
+          "votes": -100,
+          "article_img_url": "https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700"
+        }
+      ]
+    }
+  },
+
+  "DELETE /api/comments/:comment_id": {
+    "description": "delete an comment which match the provided comment_id,return empty object",
+    "queries": ["comment_id"],
+    "exampleResponse": {}
+    },
+
+  "/api/users": {
+    "description": "serves an array of all users",
+    "queries": [],
+    "exampleResponse": {
+      "users": [
+          {
+            "username": "butter_bridge",
+            "name": "jonny",
+            "avatar_url": "https://www.healthytherapies.com/wp-content/uploads/2016/06/Lime3.jpg"
+          }
+      ]
   }
+}
+
 }
