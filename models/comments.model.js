@@ -17,18 +17,22 @@ exports.fetchCommentsByArticleId = (articleId) => {
 
 exports.insertCommentsByArticleId = (article_id,queryBody) => {
     const {username,body} = queryBody;
-    return fetchArticleById(article_id).then((article) => {
-        if (article.length !== 0) {
-            return fetchUserByUsername(username).then((user) => {
-                if (user !== 0) {
+    if(typeof username !== "string" || typeof body !== "string" ){
+        return Promise.reject({status:400,msg: "Bad Request"});
+    }
+    else{
+        return fetchArticleById(article_id).then((article) => {
+            if (article.length !== 0) {
+                return fetchUserByUsername(username).then(() => {
                     const createdAt = convertTimestampToDate({created_at:Date.now()})["created_at"]
                     return db.query("INSERT INTO comments (article_id,author,body,created_at,votes) VALUES ($1,$2,$3,$4,$5) RETURNING *",
                         [article_id,username,body,createdAt,0]).then(({rows})=>{
                         return rows[0];
                     })
-                }
-            })
-        }
-    })
+                })
+            }
+        })
+    }
+
 
 }

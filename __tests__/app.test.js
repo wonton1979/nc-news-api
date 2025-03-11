@@ -211,6 +211,7 @@ describe("POST /api/articles/:article_id/comments", () => {
                 .send({username: 'rogersop',body: 'It is cold outside!'})
                 .expect(201)
                 .then(({body:{new_comment}})=>{
+                    expect(new_comment.comment_id).toBe(19);
                     expect(new_comment.author).toBe('rogersop');
                     expect(new_comment.body).toBe('It is cold outside!');
                     expect(new_comment.article_id).toBe(2);
@@ -245,6 +246,79 @@ describe("POST /api/articles/:article_id/comments", () => {
                 .expect(404)
                 .then(({body})=>{
                     expect(body.msg).toBe('This user does not exist');
+                })
+        })
+        test("GET 400: Testing if wrong data type in object",()=>{
+            return request(app)
+                .post("/api/articles/2/comments")
+                .send({username: 79,body: 99})
+                .expect(400)
+                .then(({body})=>{
+                    expect(body.msg).toBe('Bad Request');
+                })
+        })
+    })
+})
+
+
+describe("PATCH /api/articles/:article_id/      | Update article votes if article exist |", () => {
+    describe("Functionality Test", () => {
+        test("201 : Post new comment to the specific article_id",()=>{
+            return request(app)
+                .patch("/api/articles/2")
+                .send({inc_votes: -100})
+                .expect(200)
+                .then(({body:{article}})=> {
+                    const updatedArticle = {
+                        article_id: 2,
+                        title: 'Sony Vaio; or, The Laptop',
+                        topic: 'mitch',
+                        author: 'icellusedkars',
+                        body: 'Call me Mitchell. Some years ago..',
+                        created_at: "2020-10-16T05:03:00.000Z",
+                        votes: -100,
+                        article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700'
+                    }
+                    expect(article[0]).toMatchObject(updatedArticle);
+                })
+        });
+    })
+
+    describe("Error Handling Test", () => {
+        test("GET 404: Testing if no article found which related to the article_id",()=>{
+            return request(app)
+                .patch("/api/articles/9999/")
+                .send({inc_votes: -100})
+                .expect(404)
+                .then(({body})=>{
+                    expect(body.msg).toBe('No articles found with this id.');
+                })
+        })
+        test("GET 400: Testing if the provided article_id is not the right format",()=>{
+            return request(app)
+                .patch("/api/articles/apple")
+                .send({inc_votes: -100})
+                .expect(400)
+                .then(({body})=>{
+                    expect(body.msg).toBe('Bad Request');
+                })
+        })
+        test("GET 404: Testing if votes number is not a number",()=>{
+            return request(app)
+                .patch("/api/articles/2")
+                .send({inc_votes: "apple"})
+                .expect(400)
+                .then(({body})=>{
+                    expect(body.msg).toBe('Bad Request');
+                })
+        })
+        test("GET 404: Testing if votes number is a float number",()=>{
+            return request(app)
+                .patch("/api/articles/2")
+                .send({inc_votes: 8.88})
+                .expect(400)
+                .then(({body})=>{
+                    expect(body.msg).toBe('Bad Request');
                 })
         })
     })
