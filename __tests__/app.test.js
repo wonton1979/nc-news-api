@@ -4,7 +4,7 @@ const seed = require("../db/seeds/seed")
 const data = require("../db/data/test-data")
 const request = require("supertest");
 const app = require("../app.js");
-const {expectedTopics,expectedUsers} = require("./expectedData");
+const {expectedTopics,expectedUsers,articlesOrderByAuthorDesc,articlesSortByAuthorNoOrder,articlesQueryWithOnlyOrderGiven} = require("./expectedData");
 require('jest-sorted');
 
 
@@ -87,7 +87,8 @@ describe("GET /api/articles/:article_id", () => {
                         body: 'some gifs',
                         created_at: '2020-11-03T09:12:00.000Z',
                         votes: 0,
-                        article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700'
+                        article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700',
+                        comment_count: '2'
                     }
                     expect(article[0]).toMatchObject(expectedArticle);
                 });
@@ -379,7 +380,7 @@ describe("GET /api/users", () => {
     })
 
     describe("Error Handling Test", () => {
-        test("GET 404: Testing if no topic at all",()=>{
+        test("GET 404: Testing if no user at all",()=>{
             return db.query("DELETE * FROM users", () => {
             })
             return request(app)
@@ -391,3 +392,126 @@ describe("GET /api/users", () => {
         })
     })
 });
+
+
+describe("GET /api/articles  query with sort_by and order", () => {
+    describe("Functionality Test", () => {
+        test("200: Responds with an array of object which sorted by given column and given order", () => {
+            return request(app)
+                .get("/api/articles?sort_by=author&order=desc")
+                .expect(200)
+                .then(({body}) => {
+                    expect(body).toHaveLength(13);
+                    expect(body).toMatchObject(articlesOrderByAuthorDesc)
+                    expect(body).toBeSorted({descending: true, key: 'author'})
+                });
+        });
+
+        test("200: Responds with an array of object which only sorted by given column without given order", () => {
+            return request(app)
+                .get("/api/articles?sort_by=author")
+                .expect(200)
+                .then(({body}) => {
+                    expect(body).toHaveLength(13);
+                    expect(body).toMatchObject(articlesSortByAuthorNoOrder)
+                    expect(body).toBeSorted({descending: false, key: 'author'})
+                });
+        });
+
+        test("200: Responds with an array of object which default sort by created_at with only order be given", () => {
+            return request(app)
+                .get("/api/articles?order=desc")
+                .expect(200)
+                .then(({body}) => {
+                    expect(body).toHaveLength(13);
+                    expect(body).toMatchObject(articlesQueryWithOnlyOrderGiven)
+                    expect(body).toBeSorted({descending: true, key: 'created_at'})
+                });
+        });
+    })
+
+    describe("Error Handling Test", () => {
+        test("GET 404: Testing if no articles at all",()=>{
+            async () =>{
+                await db.query("DELETE * FROM articles");
+                return request(app)
+                    .get("/api/articles")
+                    .expect(404)
+                    .then(({body})=>{
+                        expect(body.msg).toBe('Not Found');
+                    })
+            }
+
+        })
+
+        test("GET 400: Testing if order by column is not exist",()=>{
+            return request(app)
+                .get("/api/articles?sort_by=apple&order=desc")
+                .expect(400)
+                .then(({body})=>{
+                    expect(body.msg).toBe('Bad Request');
+                })
+        })
+
+        test("GET 400: Testing if  order is not valid",()=>{
+            return request(app)
+                .get("/api/articles?sort_by=author&order=apple")
+                .expect(400)
+                .then(({body})=>{
+                    expect(body.msg).toBe('Bad Request');
+                })
+        })
+    })
+});
+
+describe("GET /api/articles(topic)  ", () => {
+    describe("Functionality Test", () => {
+        test("200: Responds with an array of object which relate to the topic", () => {
+            async () =>{
+                await request(app)
+                    .get("/api/articles")
+                    .query({topic: 'cats'})
+                    .expect(200)
+                    .then(({body}) => {
+                        const expectedArticle =  {
+                            article_id: 5,
+                            title: 'UNCOVERED: catspiracy to bring down democracy',
+                            topic: 'cats',
+                            author: 'rogersop',
+                            body: 'Bastet walks amongst us, and the cats are taking arms!',
+                            created_at: "2020-08-03T13:14:00.000Z",
+                            votes: 0,
+                            article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700'
+                        };
+                        expect(body).toHaveLength(1);
+                        expect(body[0]).toMatchObject(expectedArticle)
+                    });
+            }
+        });
+    })
+
+    describe("Error Handling Test", () => {
+        test("GET 200: Testing if no articles under the provided topic", () => {
+            async () => {
+                 await request(app)
+                     .get("/api/articles")
+                     .query({topic: 'apple'})
+                     .expect(200)
+                     .then(({body}) => {
+                        expect(body).toEqual([]);
+                })
+            }
+        })
+        test("GET 400: Testing if given topic in wrong data type", () => {
+            return request(app)
+                .get("/api/articles")
+                .query({topic: 888})
+                .expect(400)
+                .then(({body}) => {
+                    expect(body.msg).toBe("Bad Request");
+                })
+        })
+    })
+
+})
+
