@@ -512,6 +512,33 @@ describe("GET /api/articles(topic)  ", () => {
                 })
         })
     })
-
 })
 
+describe("GET /api/users/:username", () => {
+    describe("Functionality Test", () => {
+        test("200: Responds with an of object contains the user's details which relate to the username requested", () => {
+            return request(app)
+                .get("/api/users/rogersop")
+                .expect(200)
+                .then(({body:{user}}) => {
+                    const expectedUser = {
+                        username: "rogersop",
+                        name: "paul",
+                        avatar_url: "https://avatars2.githubusercontent.com/u/24394918?s=400&v=4",
+                    }
+                    expect(user[0]).toMatchObject(expectedUser);
+                });
+        });
+    })
+
+    describe("Error Handling Test", () => {
+        test("GET 404: Testing if no user found which related to the username",()=>{
+            return request(app)
+                .get("/api/users/9999")
+                .expect(404)
+                .then(({body})=>{
+                    expect(body.msg).toBe('This user does not exist');
+                })
+        })
+    })
+})
