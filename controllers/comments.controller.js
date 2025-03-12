@@ -1,4 +1,4 @@
-const {fetchCommentsByArticleId,insertCommentsByArticleId,dropCommentByCommentId} = require('../models/comments.model')
+const {fetchCommentsByArticleId,insertCommentsByArticleId,dropCommentByCommentId,updateCommentVotesByCommentId} = require('../models/comments.model')
 
 
 exports.getCommentsByArticleId = (request, response,next) => {
@@ -23,6 +23,16 @@ exports.deleteCommentByCommentId = (request, response,next) => {
     const {comment_id} = request.params;
     dropCommentByCommentId(comment_id).then((comment)=>{
         response.status(204).send()
+    }).catch((error)=>{
+        next(error);
+    })
+}
+
+exports.patchCommentVotesByCommentId = (request, response,next) => {
+    const {comment_id} = request.params;
+    const {inc_votes} = request.body;
+    updateCommentVotesByCommentId(comment_id,inc_votes).then((comment)=>{
+        response.status(200).send({comment: comment})
     }).catch((error)=>{
         next(error);
     })

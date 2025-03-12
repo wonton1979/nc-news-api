@@ -53,6 +53,14 @@ function dropCommentByCommentId (commentId) {
     })
 }
 
+function updateCommentVotesByCommentId (commentId,inc_votes){
+    return fetchCommentByCommentId(commentId).then((comment)=>{
+        const newVotes = comment[0].votes + inc_votes;
+        return db.query("UPDATE comments SET votes = $1 where comment_id = $2 RETURNING *",[newVotes,commentId]).then(({rows})=>{
+            return rows;
+        })
+    })
+}
 
 
-module.exports = {fetchCommentsByArticleId,insertCommentsByArticleId,dropCommentByCommentId};
+module.exports = {fetchCommentsByArticleId,insertCommentsByArticleId,dropCommentByCommentId,updateCommentVotesByCommentId};
