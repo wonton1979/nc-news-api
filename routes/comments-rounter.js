@@ -1,7 +1,8 @@
 const {
     getCommentsByArticleId,
     postCommentsByArticleId,
-    deleteCommentByCommentId
+    deleteCommentByCommentId,
+    patchCommentVotesByCommentId
 } = require("../controllers/comments.controller");
 
 const express = require("express");
@@ -13,6 +14,8 @@ commentsRouter
     .get(getCommentsByArticleId)
     .post(postCommentsByArticleId);
 
-commentsRouter.delete("/api/comments/:comment_id",deleteCommentByCommentId);
+commentsRouter
+    .route("/api/comments/:comment_id")
+    .delete(deleteCommentByCommentId).patch(patchCommentVotesByCommentId);
 
 module.exports = commentsRouter;

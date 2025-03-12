@@ -542,3 +542,91 @@ describe("GET /api/users/:username", () => {
         })
     })
 })
+
+describe("PATCH /api/comments/:comment_id", () => {
+    describe("Functionality Test", () => {
+        test("200: Update comment's votes if the comment is exist and in_votes is a positive integer",()=>{
+            return request(app)
+                .patch("/api/comments/2")
+                .send({inc_votes: 6})
+                .expect(200)
+                .then(({body:{comment}})=> {
+                    const updatedComment = {
+                            comment_id: 2,
+                            article_id: 1,
+                            body: "The beautiful thing about treasure is that it exists. Got to find out what kind of sheets these are; not cotton, not rayon, silky.",
+                            votes: 20,
+                            author: "butter_bridge",
+                            created_at: "2020-10-31T03:03:00.000Z",
+                        };
+                    expect(comment[0]).toMatchObject(updatedComment);
+                })
+        });
+
+        test("200: Update comment's votes if the comment is exist and in_votes is a negative integer",()=>{
+            return request(app)
+                .patch("/api/comments/2")
+                .send({inc_votes: -10})
+                .expect(200)
+                .then(({body:{comment}})=> {
+                    const updatedComment = {
+                        comment_id: 2,
+                        article_id: 1,
+                        body: "The beautiful thing about treasure is that it exists. Got to find out what kind of sheets these are; not cotton, not rayon, silky.",
+                        votes: 4,
+                        author: "butter_bridge",
+                        created_at: "2020-10-31T03:03:00.000Z",
+                    };
+                    expect(comment[0]).toMatchObject(updatedComment);
+                })
+        });
+    })
+
+    describe("Error Handling Test", () => {
+        test("GET 404: Testing if no comment found which related to the comment_id",()=>{
+            return request(app)
+                .patch("/api/comments/9999/")
+                .send({inc_votes: -100})
+                .expect(404)
+                .then(({body})=>{
+                    expect(body.msg).toBe('No comment found with this id.');
+                })
+        })
+        test("GET 400: Testing if the provided comment_id is not the right format",()=>{
+            return request(app)
+                .patch("/api/comments/apple")
+                .send({inc_votes: -100})
+                .expect(400)
+                .then(({body})=>{
+                    expect(body.msg).toBe('Bad Request');
+                })
+        })
+        test("GET 404: Testing if votes for the comment is not a number",()=>{
+            return request(app)
+                .patch("/api/comments/2")
+                .send({inc_votes: "apple"})
+                .expect(400)
+                .then(({body})=>{
+                    expect(body.msg).toBe('Bad Request');
+                })
+        })
+        test("GET 404: Testing if votes is a float number",()=>{
+            return request(app)
+                .patch("/api/comments/2")
+                .send({inc_votes: 8.88})
+                .expect(400)
+                .then(({body})=>{
+                    expect(body.msg).toBe('Bad Request');
+                })
+        })
+        test("GET 404: Testing if inc_votes is missing",()=>{
+            return request(app)
+                .patch("/api/comments/2")
+                .send({})
+                .expect(400)
+                .then(({body})=>{
+                    expect(body.msg).toBe('Bad Request');
+                })
+        })
+    })
+})

@@ -79,7 +79,6 @@ function updateArticleById (articleId,inc_votes){
             return rows;
         })
     })
-
 }
 
 module.exports = {fetchArticleById,fetchAllArticles,updateArticleById};
