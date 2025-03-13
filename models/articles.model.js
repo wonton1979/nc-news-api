@@ -1,6 +1,8 @@
 const db = require("../db/connection");
 const format = require("pg-format");
 const {WHERE} = require("pg-format/lib/reserved");
+const {fetchUserByUsername} = require("./users.model");
+const {convertTimestampToDate} = require("../db/seeds/utils");
 
 function fetchArticleById (articleId)  {
     return db.query("SELECT articles.*,(SELECT COUNT(*) FROM comments WHERE article_id = $1) AS comment_count FROM articles WHERE article_id = $2",[articleId,articleId]).then(({rows})=>{
@@ -81,4 +83,12 @@ function updateArticleById (articleId,inc_votes){
     })
 }
 
-module.exports = {fetchArticleById,fetchAllArticles,updateArticleById};
+function insertNewArticle(queryBody){
+    const {author,title,body,topic} = queryBody;
+    return db.query("INSERT INTO articles (author,title,body,topic) VALUES ($1,$2,$3,$4) RETURNING *",
+        [author,title,body,topic]).then(({rows})=>{
+        return rows[0];
+    })
+}
+
+module.exports = {fetchArticleById,fetchAllArticles,updateArticleById,insertNewArticle};

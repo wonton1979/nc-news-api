@@ -1,4 +1,4 @@
-const {fetchArticleById,fetchAllArticles,updateArticleById} = require('../models/articles.model')
+const {fetchArticleById,fetchAllArticles,updateArticleById,insertNewArticle} = require('../models/articles.model')
 
 
 exports.getArticleById = (request, response,next) => {
@@ -28,3 +28,10 @@ exports.patchArticleById = (request, response,next) => {
     })
 }
 
+exports.postNewArticle= (request, response, next) => {
+    insertNewArticle(request.body).then((newArticle)=>{
+        response.status(201).send({'new_article': newArticle});
+    }).catch((error)=>{
+        next(error);
+    });
+}

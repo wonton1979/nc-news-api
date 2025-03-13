@@ -6,7 +6,8 @@ const seed = ({ topicData, userData, articleData, commentData }) => {
   return db
       .query("DROP TABLE IF EXISTS comments;")
       .then(() => {
-        return db.query("DROP TABLE IF EXISTS articles;");
+          console.log("Using database:", process.env.DATABASE_URL);
+          return db.query("DROP TABLE IF EXISTS articles;");
       })
       .then(() => {
         return db.query("DROP TABLE IF EXISTS users;");
@@ -65,9 +66,9 @@ function createArticles(articleData) {
                                topic VARCHAR(1000) REFERENCES topics(slug),
                                author VARCHAR(250) REFERENCES users(username),
                                body TEXT,
-                               created_at TIMESTAMP,
+                               created_at TIMESTAMP DEFAULT NOW(),
                                votes INT DEFAULT 0,
-                               article_img_url VARCHAR(1000));`
+                               article_img_url VARCHAR(1000) DEFAULT 'https://northcoders.com/');`
     ).then(() => {
         const formattedData = articleData.map(
             ({ title,topic,author,body,created_at,votes,article_img_url}) => {
