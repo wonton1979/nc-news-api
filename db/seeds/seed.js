@@ -6,7 +6,6 @@ const seed = ({ topicData, userData, articleData, commentData }) => {
   return db
       .query("DROP TABLE IF EXISTS comments;")
       .then(() => {
-          console.log("Using database:", process.env.DATABASE_URL);
           return db.query("DROP TABLE IF EXISTS articles;");
       })
       .then(() => {
