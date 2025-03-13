@@ -631,3 +631,64 @@ describe("PATCH /api/comments/:comment_id", () => {
     })
 })
 
+describe("POST /api/articles/", () => {
+    describe("Functionality Test", () => {
+        test("201 : Post a new article",()=>{
+            return request(app)
+                .post("/api/articles")
+                .send({author: 'rogersop',title:"UK's Spring",body: 'It is cold outside!',topic:'cats'})
+                .expect(201)
+                .then(({body:{new_article}})=>{
+                    console.log(new_article);
+                    expect(new_article[0].article_id).toBe(14);
+                    expect(new_article[0].author).toBe('rogersop');
+                    expect(new_article[0].body).toBe('It is cold outside!');
+                    expect(new_article[0].article_img_url).toBe("https://northcoders.com/");
+                    expect(new_article[0].votes).toBe(0);
+                    expect(new_article[0].topic).toBe('cats');
+                    expect(typeof new_article[0].created_at).toBe("string");
+                    expect(new_article[0].title).toBe("UK's Spring");
+                    expect(new_article[0].comment_count).toBe("0");
+                });
+        })
+    })
+
+    describe("Error Handling Test", () => {
+        test("POST 404: Testing if author of new article is not in users table",()=>{
+            return request(app)
+                .post("/api/articles")
+                .send({author: 'wonton79',title:"UK's Spring",body: 'It is cold outside!',topic:'cats'})
+                .expect(404)
+                .then(({body})=>{
+                    expect(body.msg).toBe('This user does not exist');
+                })
+        })
+        test("POST 404: Testing if topic of new article is not in topics users table",()=>{
+            return request(app)
+                .post("/api/articles")
+                .send({author: 'rogersop',title:"UK's Spring",body: 'It is cold outside!',topic:'dogs'})
+                .expect(404)
+                .then(({body})=>{
+                    expect(body.msg).toBe('The topic(slug) does not exist.');
+                })
+        })
+        test("GET 400: Testing if query contains properties which are not in this list [author,title,body,topic,article_img_url]",()=>{
+            return request(app)
+                .post("/api/articles")
+                .send({author: 'rogersop',title:"UK's Spring",body: 'It is cold outside!',topic:'cats',weather: "Raining"})
+                .expect(400)
+                .then(({body})=>{
+                    expect(body.msg).toBe('Bad Request');
+                })
+        })
+        test("GET 400: Testing if wrong data type in object",()=>{
+            return request(app)
+                .post("/api/articles")
+                .send({author: 'rogersop',title:8888,body: 8888,topic:'cats',weather: "Raining"})
+                .expect(400)
+                .then(({body})=>{
+                    expect(body.msg).toBe('Bad Request');
+                })
+        })
+    })
+})

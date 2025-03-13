@@ -1,6 +1,6 @@
 {
   "GET /api": {
-    "description": "serves up a json representation of all the available endpoints of the api"
+    "description": "serves up a json representation of all the available endpoints of the api."
   },
   "GET /api/topics": {
     "description": "serves an array of all topics",
@@ -10,7 +10,7 @@
     }
   },
   "GET /api/articles/:article_id": {
-    "description": "serves an array contains one object which matching the key provided ",
+    "description": "Fetch a single article which matching the article id.",
     "queries": ["article_id"],
     "exampleResponse": {
       "articles": [{
@@ -115,6 +115,28 @@
           }
       ]
   }
-}
+},
+
+  "POST /api/articles": {
+    "description": "Insert a new article into articles table",
+    "queries": ["author", "topic", "title","body","article_img_url"],
+    "exampleResponse": {
+      "new_article":
+          [
+            {
+              "article_id": 14,
+              "title": "UK's Spring",
+              "topic": "cats",
+              "author": "rogersop",
+              "body": "It is cold outside!",
+              "created_at": "2025-03-13T19:35:57.004Z",
+              "votes": 0,
+              "article_img_url": "https://northcoders.com/",
+              "comment_count": "0"
+            }
+          ]
+    }
+  }
+
 
 }

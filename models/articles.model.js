@@ -1,8 +1,8 @@
 const db = require("../db/connection");
 const format = require("pg-format");
-const {WHERE} = require("pg-format/lib/reserved");
 const {fetchUserByUsername} = require("./users.model");
-const {convertTimestampToDate} = require("../db/seeds/utils");
+const {fetchTopicByTopic} = require("./topics.model");
+
 
 function fetchArticleById (articleId)  {
     return db.query("SELECT articles.*,(SELECT COUNT(*) FROM comments WHERE article_id = $1) AS comment_count FROM articles WHERE article_id = $2",[articleId,articleId]).then(({rows})=>{
@@ -83,12 +83,35 @@ function updateArticleById (articleId,inc_votes){
     })
 }
 
-function insertNewArticle(queryBody){
-    const {author,title,body,topic} = queryBody;
-    return db.query("INSERT INTO articles (author,title,body,topic) VALUES ($1,$2,$3,$4) RETURNING *",
-        [author,title,body,topic]).then(({rows})=>{
-        return rows[0];
+function insertNewArticle(queryBody) {
+    const {author, title, body, topic,article_img_url} = queryBody;
+    const greenList = ["author", "title", "body", "topic", "article_img_url"]
+    if (Object.keys(queryBody).some(key => !greenList.includes(key))) {
+        return Promise.reject({ status: 400, msg: "Bad Request" });
+    }
+    console.log("here");  // This won't log if rejection occurs
+
+    return fetchUserByUsername(author).then(({rows})=>{
+        return fetchTopicByTopic(topic).then(({rows})=>{
+            if(!article_img_url){
+                return db.query("INSERT INTO articles (author,title,body,topic) VALUES ($1,$2,$3,$4) RETURNING *",
+                    [author, title, body, topic]).then(({rows}) => {
+                    return fetchArticleById(rows[0].article_id).then((article) => {
+                        return article;
+                    })
+                })
+            }
+            else {
+                return db.query("INSERT INTO articles (author,title,body,topic,article_img_url) VALUES ($1,$2,$3,$4) RETURNING *",
+                    [author, title, body, topic,article_img_url]).then(({rows}) => {
+                    return fetchArticleById(rows[0].article_id).then((article) => {
+                        return article;
+                    })
+                })
+            }
+        })
     })
+
 }
 
 module.exports = {fetchArticleById,fetchAllArticles,updateArticleById,insertNewArticle};

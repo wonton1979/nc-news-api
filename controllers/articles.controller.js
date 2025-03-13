@@ -32,6 +32,7 @@ exports.postNewArticle= (request, response, next) => {
     insertNewArticle(request.body).then((newArticle)=>{
         response.status(201).send({'new_article': newArticle});
     }).catch((error)=>{
+        console.log(error);
         next(error);
     });
 }
