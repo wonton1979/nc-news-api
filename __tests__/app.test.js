@@ -4,7 +4,8 @@ const seed = require("../db/seeds/seed")
 const data = require("../db/data/test-data")
 const request = require("supertest");
 const app = require("../app.js");
-const {expectedTopics,expectedUsers,articlesOrderByAuthorDesc,articlesSortByAuthorNoOrder,articlesQueryWithOnlyOrderGiven} = require("./expectedData");
+const {expectedTopics,expectedUsers,articlesOrderByAuthorDesc,
+    articlesSortByAuthorNoOrder,articlesQueryWithOnlyOrderGiven,articleQueryWithAuthor,articleQueryWithMultipleProperties} = require("./expectedData");
 require('jest-sorted');
 
 
@@ -121,10 +122,57 @@ describe("GET /api/articles", () => {
             return request(app)
                 .get("/api/articles")
                 .expect(200)
-                .then(({body}) => {
-                    expect(body).toHaveLength(5);
-                    expect(body).toMatchObject(expectedTopics)
-                    expect(body).toBeSorted({descending: true, key: 'created_at'})
+                .then(({body:{articles,total_count}}) => {
+                    expect(articles).toHaveLength(13);
+                    expect(articles).toMatchObject(expectedTopics)
+                    expect(articles).toBeSorted({descending: true, key: 'created_at'})
+                    expect(total_count).toBe(13);
+                });
+        });
+        test("200: Responds with an array of object which list of all available articles with single query", () => {
+            return request(app)
+                .get("/api/articles?author=butter_bridge")
+                .expect(200)
+                .then(({body:{articles,total_count}}) => {
+                    expect(articles).toHaveLength(4);
+                    expect(articles).toMatchObject(articleQueryWithAuthor)
+                    expect(articles).toBeSorted({descending: true, key: 'created_at'})
+                    expect(total_count).toBe(4);
+                });
+        });
+
+        test("200: Responds with an array of object which list of all available articles with multiple queries", () => {
+            return request(app)
+                .get("/api/articles?author=butter_bridge&votes=0")
+                .expect(200)
+                .then(({body:{articles,total_count}}) => {
+                    expect(articles).toHaveLength(3);
+                    expect(articles).toMatchObject(articleQueryWithMultipleProperties)
+                    expect(articles).toBeSorted({descending: true, key: 'created_at'})
+                    expect(total_count).toBe(3);
+                });
+        });
+
+        test("200: Testing to add limit and page to query", () => {
+            return request(app)
+                .get("/api/articles?author=butter_bridge&votes=0&limit=2&p=2")
+                .expect(200)
+                .then(({body:{articles}}) => {
+                    const expectedArticle = [
+                        {
+                            article_id: 9,
+                            title: "They're not exactly dogs, are they?",
+                            topic: 'mitch',
+                            author: 'butter_bridge',
+                            body: 'Well? Think about it.',
+                            created_at: '2020-06-06T09:10:00.000Z',
+                            votes: 0,
+                            article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700'
+                        }
+                    ]
+                    expect(articles).toHaveLength(1);
+                    expect(articles).toMatchObject(expectedArticle)
+                    expect(articles).toBeSorted({descending: true, key: 'created_at'})
                 });
         });
     })
@@ -139,6 +187,42 @@ describe("GET /api/articles", () => {
                 .expect(404)
                 .then(({body})=>{
                     expect(body.msg).toBe('Not Found');
+                })
+        })
+
+        test("GET 400: Testing if type of votes are wrong",()=>{
+            return request(app)
+                .get("/api/articles?votes=apple")
+                .expect(400)
+                .then(({body})=>{
+                    expect(body.msg).toBe('Bad Request');
+                })
+        })
+
+        test("GET 400: Testing if votes is negative number",()=>{
+            return request(app)
+                .get("/api/articles?votes=-10")
+                .expect(400)
+                .then(({body})=>{
+                    expect(body.msg).toBe('Bad Request');
+                })
+        })
+
+        test("GET 200: Testing if page number is lager then the page available,empty array should return",()=>{
+            return request(app)
+                .get("/api/articles?limit=2&p=9")
+                .expect(200)
+                .then(({body:{articles}})=>{
+                    expect(articles).toEqual([]);
+                })
+        })
+
+        test("GET 400: Testing if only page number provided without limit property",()=>{
+            return request(app)
+                .get("/api/articles?p=9")
+                .expect(400)
+                .then(({body})=>{
+                    expect(body.msg).toBe('Bad Request');
                 })
         })
     })
@@ -400,10 +484,10 @@ describe("GET /api/articles  query with sort_by and order", () => {
             return request(app)
                 .get("/api/articles?sort_by=author&order=desc")
                 .expect(200)
-                .then(({body}) => {
-                    expect(body).toHaveLength(13);
-                    expect(body).toMatchObject(articlesOrderByAuthorDesc)
-                    expect(body).toBeSorted({descending: true, key: 'author'})
+                .then(({body:{articles}}) => {
+                    expect(articles).toHaveLength(13);
+                    expect(articles).toMatchObject(articlesOrderByAuthorDesc)
+                    expect(articles).toBeSorted({descending: true, key: 'author'})
                 });
         });
 
@@ -411,10 +495,10 @@ describe("GET /api/articles  query with sort_by and order", () => {
             return request(app)
                 .get("/api/articles?sort_by=author")
                 .expect(200)
-                .then(({body}) => {
-                    expect(body).toHaveLength(13);
-                    expect(body).toMatchObject(articlesSortByAuthorNoOrder)
-                    expect(body).toBeSorted({descending: false, key: 'author'})
+                .then(({body:{articles}}) => {
+                    expect(articles).toHaveLength(13);
+                    expect(articles).toMatchObject(articlesSortByAuthorNoOrder)
+                    expect(articles).toBeSorted({descending: false, key: 'author'})
                 });
         });
 
@@ -422,10 +506,10 @@ describe("GET /api/articles  query with sort_by and order", () => {
             return request(app)
                 .get("/api/articles?order=desc")
                 .expect(200)
-                .then(({body}) => {
-                    expect(body).toHaveLength(13);
-                    expect(body).toMatchObject(articlesQueryWithOnlyOrderGiven)
-                    expect(body).toBeSorted({descending: true, key: 'created_at'})
+                .then(({body:{articles}}) => {
+                    expect(articles).toHaveLength(13);
+                    expect(articles).toMatchObject(articlesQueryWithOnlyOrderGiven)
+                    expect(articles).toBeSorted({descending: true, key: 'created_at'})
                 });
         });
     })
@@ -639,7 +723,6 @@ describe("POST /api/articles/", () => {
                 .send({author: 'rogersop',title:"UK's Spring",body: 'It is cold outside!',topic:'cats'})
                 .expect(201)
                 .then(({body:{new_article}})=>{
-                    console.log(new_article);
                     expect(new_article[0].article_id).toBe(14);
                     expect(new_article[0].author).toBe('rogersop');
                     expect(new_article[0].body).toBe('It is cold outside!');

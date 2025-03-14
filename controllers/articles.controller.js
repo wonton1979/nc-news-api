@@ -12,7 +12,7 @@ exports.getArticleById = (request, response,next) => {
 
 exports.getAllArticles = (request, response, next) => {
     fetchAllArticles(request.query).then((articles)=>{
-        response.status(200).send(articles)
+        response.status(200).send({articles: articles,total_count:articles.length})
     }).catch((error)=>{
         next(error);
     })
@@ -32,7 +32,6 @@ exports.postNewArticle= (request, response, next) => {
     insertNewArticle(request.body).then((newArticle)=>{
         response.status(201).send({'new_article': newArticle});
     }).catch((error)=>{
-        console.log(error);
         next(error);
     });
 }

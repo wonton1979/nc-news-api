@@ -15,8 +15,8 @@ function fetchArticleById (articleId)  {
 
 function fetchAllArticles (queryData)  {
     if(Object.keys(queryData).length === 0){
-        return db.query(`SELECT articles.*,COUNT(comments.comment_id) AS comment_count
-                     FROM articles JOIN comments ON articles.article_id = comments.article_id
+        return db.query(`SELECT articles.*, COALESCE(COUNT(comments.comment_id),0) AS comment_count
+                     FROM articles LEFT JOIN comments ON articles.article_id = comments.article_id
                      GROUP BY (articles.article_id) ORDER BY articles.created_at DESC`).then(({rows}) => {
             if(rows.length === 0){
                 return Promise.reject({status:404,msg: "Not Found"})
@@ -25,52 +25,113 @@ function fetchAllArticles (queryData)  {
         })
     }
     else {
-        let formattedQuery = ""
-        let queryStr = "SELECT * from articles";
-        const allowedInput = ['sort_by', 'order', 'article_id','author','title','created_at','votes','article_img_url','body','topic']
-        const allowedOrder= ['desc','asc'];
-        if(Object.keys(queryData).length === 2 && queryData.sort_by && queryData.order){
-            if(!allowedInput.includes(queryData.sort_by) || !allowedOrder.includes(queryData.order.toLowerCase())){
+        if(queryData.votes){
+            const votesInNumber = Number(queryData.votes);
+            if(isNaN(votesInNumber) || votesInNumber < 0){
                 return Promise.reject({status: 400, msg: 'Bad Request'})
             }
-            else {
-                queryStr += ' ORDER BY %I %s';
-                formattedQuery =format(queryStr,queryData.sort_by,queryData.order)
-                return db.query(formattedQuery).then(({rows})=>{
-                    return rows;
-                })
+        }
+        if(queryData.topic){
+            if(!isNaN(Number(queryData.topic))) {
+                return Promise.reject({status: 400, msg: 'Bad Request'})
             }
         }
-        else if(Object.keys(queryData).length === 1){
-            if(queryData.sort_by){
-                queryStr += ' ORDER BY %I';
-                formattedQuery =format(queryStr,queryData.sort_by)
-                return db.query(formattedQuery).then(({rows})=>{
-                    return rows;
-                })
+        const propertyQueryAllowed = ['article_id','author','title','created_at','votes','article_img_url','body','topic'];
+        let queryStr = "SELECT * FROM articles";
+        const valueList = [];
+        let valuesCounter = 0;
+        const propertyQueryList = propertyQueryAllowed.filter((eachProperty)=>{
+            if(Object.keys(queryData).includes(eachProperty)){
+                return eachProperty;
             }
-            else if(queryData.order){
-                queryStr += ' ORDER BY created_at %s';
-                formattedQuery =format(queryStr,queryData.order)
-                return db.query(formattedQuery).then(({rows})=>{
-                    return rows;
-                })
+        })
+        if(propertyQueryList.length !== 0){
+            valuesCounter += 1;
+            queryStr += ` WHERE ${propertyQueryList[0]} = $${valuesCounter}`;
+            valueList.push(queryData[propertyQueryList[0]])
+            if(propertyQueryAllowed.length > 1){
+                for(let i= 1; i<propertyQueryList.length; i++){
+                    valuesCounter += 1;
+                    queryStr += ` and ${propertyQueryList[i]} = $${valuesCounter}`;
+                    valueList.push(queryData[propertyQueryList[i]]);
+                }
             }
-            else if(queryData.topic && (queryData.topic != parseInt(queryData.topic))){
-                console.log(typeof queryData.topic)
-                queryStr += " where topic = '%I'";
-                formattedQuery =format(queryStr,queryData.topic)
-                return db.query(formattedQuery).then(({rows})=>{
-                    return rows;
-                })
+        }
+
+        if(queryData.sort_by){
+            if(propertyQueryAllowed.includes(queryData.sort_by)){
+                queryStr += ` ORDER BY %I`;
+                queryStr = format(queryStr,queryData.sort_by);
+                if(queryData.order){
+                    if(["desc","asc"].includes(queryData.order.toLowerCase())){
+                        queryStr += ` %s`;
+                        queryStr = format(queryStr,queryData.order);
+                    }
+                    else {
+                        return Promise.reject({status: 400, msg: 'Bad Request'})
+                    }
+                }
             }
             else {
                 return Promise.reject({status: 400, msg: 'Bad Request'})
             }
         }
         else {
-            return Promise.reject({status: 400, msg: 'Bad Request'})
+            if(queryData.order){
+                if(["desc","asc"].includes(queryData.order.toLowerCase())){
+                    queryStr += ` ORDER BY created_at %s`;
+                    queryStr = format(queryStr,queryData.order);
+                }
+                else {
+                    return Promise.reject({status: 400, msg: 'Bad Request'})
+                }
+            }
+            else {
+                queryStr += ` ORDER BY created_at DESC`;
+            }
         }
+
+        return db.query(queryStr,valueList).then(({rows})=> {
+            const numbersOfRows = rows.length;
+            if(queryData.limit){
+                const numberLimit = Number(queryData.limit);
+                if(!isNaN(numberLimit) && numberLimit > 0){
+                    if(valuesCounter > 0){
+                        valuesCounter += 1;
+                    }
+                    else {
+                        valuesCounter = 1;
+                    }
+                    queryStr += ` LIMIT $${valuesCounter}`;
+                    valueList.push(numberLimit);
+                    const pages = Math.ceil(numbersOfRows / numberLimit);
+                    if(queryData.p){
+                        const numberPage = Number(queryData.p);
+                        if(!isNaN(numberPage) && numberPage > 0){
+                            valuesCounter += 1;
+                            queryStr += ` OFFSET $${valuesCounter}`;
+                            valueList.push((numberPage-1)*numberLimit);
+                            return db.query(queryStr,valueList).then(({rows})=> {
+                                return rows;
+                            })
+                        }
+                        else {
+                            return Promise.reject({status: 400, msg: 'Bad Request'})
+                        }
+                    }
+                }
+                else {
+                    return Promise.reject({status: 400, msg: 'Bad Request'})
+                }
+            }
+            else{
+                if(queryData.p){
+                    return Promise.reject({status: 400, msg: 'Bad Request'})
+                }
+            }
+            return rows;
+        })
+
     }
 }
 
@@ -89,7 +150,6 @@ function insertNewArticle(queryBody) {
     if (Object.keys(queryBody).some(key => !greenList.includes(key))) {
         return Promise.reject({ status: 400, msg: "Bad Request" });
     }
-    console.log("here");  // This won't log if rejection occurs
 
     return fetchUserByUsername(author).then(({rows})=>{
         return fetchTopicByTopic(topic).then(({rows})=>{
