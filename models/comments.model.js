@@ -13,10 +13,47 @@ function fetchCommentByCommentId (commentID) {
     })
 }
 
-function fetchCommentsByArticleId (articleId) {
+function fetchCommentsByArticleId (articleId,queryData) {
     return fetchArticleById(articleId).then((article) => {
         if (article.length !== 0) {
-            return db.query("SELECT * from comments where article_id = $1 ORDER BY created_at DESC",[articleId]).then(({rows})=>{
+            let queryString ="SELECT * from comments where article_id = $1 ORDER BY created_at DESC";
+            const valueList = [articleId];
+            return db.query(queryString,[articleId]).then(({rows})=>{
+                const numbersOfRows = rows.length;
+                if(queryData.limit){
+                    const numberLimit = Number(queryData.limit);
+                    if(!isNaN(numberLimit) && numberLimit > 0){
+                        queryString += ` LIMIT $2`;
+                        valueList.push(numberLimit);
+                        const pages = Math.ceil(numbersOfRows / numberLimit);
+                        if(queryData.p){
+                            const numberPage = Number(queryData.p);
+                            if(!isNaN(numberPage) && numberPage > 0){
+                                queryString += ` OFFSET $3`;
+                                valueList.push((numberPage-1)*numberLimit);
+                                return db.query(queryString,valueList).then(({rows})=> {
+                                    return rows;
+                                })
+                            }
+                            else {
+                                return Promise.reject({status: 400, msg: 'Bad Request'})
+                            }
+                        }
+                        else {
+                            return db.query(queryString,valueList).then(({rows})=> {
+                                return rows;
+                            })
+                        }
+                    }
+                    else {
+                        return Promise.reject({status: 400, msg: 'Bad Request'})
+                    }
+                }
+                else{
+                    if(queryData.p){
+                        return Promise.reject({status: 400, msg: 'Bad Request'})
+                    }
+                }
                 return rows;
             })
         }

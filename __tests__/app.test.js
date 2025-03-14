@@ -217,6 +217,24 @@ describe("GET /api/articles", () => {
                 })
         })
 
+        test("GET 400: Testing if limit property is negative number",()=>{
+            return request(app)
+                .get("/api/articles?limit=-9")
+                .expect(400)
+                .then(({body})=>{
+                    expect(body.msg).toBe('Bad Request');
+                })
+        })
+
+        test("GET 400: Testing if page property is negative number",()=>{
+            return request(app)
+                .get("/api/articles?limit=2&p=-9")
+                .expect(400)
+                .then(({body})=>{
+                    expect(body.msg).toBe('Bad Request');
+                })
+        })
+
         test("GET 400: Testing if only page number provided without limit property",()=>{
             return request(app)
                 .get("/api/articles?p=9")
@@ -267,6 +285,55 @@ describe("GET /api/articles/:article_id/comments", () => {
                     expect(comments).toMatchObject([]);
                 });
         });
+
+        test("200: Responds with limit property", () => {
+            return request(app)
+                .get("/api/articles/1/comments?limit=2")
+                .expect(200)
+                .then(({body:{comments}}) => {
+                    const expectedComments = [
+                        {
+                            comment_id: 5,
+                            article_id: 1,
+                            author: 'icellusedkars',
+                            body: 'I hate streaming noses',
+                            created_at: '2020-11-03T21:00:00.000Z',
+                            votes: 0
+                        },
+                        {
+                            comment_id: 2,
+                            article_id: 1,
+                            author: 'butter_bridge',
+                            body: 'The beautiful thing about treasure is that it exists. Got to find out what kind of sheets these are; not cotton, not rayon, silky.',
+                            created_at: '2020-10-31T03:03:00.000Z',
+                            votes: 14
+                        }
+                    ]
+
+                    expect(comments).toHaveLength(2);
+                    expect(comments).toMatchObject(expectedComments);
+                });
+        });
+
+        test("200: Responds with limit and page property", () => {
+            return request(app)
+                .get("/api/articles/1/comments?limit=2&p=6")
+                .expect(200)
+                .then(({body:{comments}}) => {
+                    const expectedComments =      [
+                        {
+                            comment_id: 9,
+                            article_id: 1,
+                            author: 'icellusedkars',
+                            body: 'Superficially charming',
+                            created_at: '2020-01-01T03:08:00.000Z',
+                            votes: 0
+                        }
+                    ]
+                    expect(comments).toHaveLength(1);
+                    expect(comments).toMatchObject(expectedComments);
+                });
+        });
     })
     describe("Error Handling Test", () => {
         test("GET 404: Testing if no article found which related to the article_id",()=>{
@@ -280,6 +347,42 @@ describe("GET /api/articles/:article_id/comments", () => {
         test("GET 400: Testing if the provided article_id is not the right format",()=>{
             return request(app)
                 .get("/api/articles/apple/comments")
+                .expect(400)
+                .then(({body})=>{
+                    expect(body.msg).toBe('Bad Request');
+                })
+        })
+
+        test("GET 200: Testing if page number is lager then the page available,empty array should return",()=>{
+            return request(app)
+                .get("/api/articles/1/comments?limit=2&p=9")
+                .expect(200)
+                .then(({body:{comments}})=>{
+                    expect(comments).toEqual([]);
+                })
+        })
+
+        test("GET 400: Testing if limit property is negative number",()=>{
+            return request(app)
+                .get("/api/articles/1/comments?limit=-9")
+                .expect(400)
+                .then(({body})=>{
+                    expect(body.msg).toBe('Bad Request');
+                })
+        })
+
+        test("GET 400: Testing if page property is negative number",()=>{
+            return request(app)
+                .get("/api/articles/1/comments?limit=2&p=-9")
+                .expect(400)
+                .then(({body})=>{
+                    expect(body.msg).toBe('Bad Request');
+                })
+        })
+
+        test("GET 400: Testing if only page number provided without limit property",()=>{
+            return request(app)
+                .get("/api/articles/1/comments?p=9")
                 .expect(400)
                 .then(({body})=>{
                     expect(body.msg).toBe('Bad Request');

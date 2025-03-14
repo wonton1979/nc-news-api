@@ -119,6 +119,11 @@ function fetchAllArticles (queryData)  {
                             return Promise.reject({status: 400, msg: 'Bad Request'})
                         }
                     }
+                    else {
+                        return db.query(queryStr,valueList).then(({rows})=> {
+                            return rows;
+                        })
+                    }
                 }
                 else {
                     return Promise.reject({status: 400, msg: 'Bad Request'})
