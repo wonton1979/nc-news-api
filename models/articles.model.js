@@ -153,28 +153,38 @@ function insertNewArticle(queryBody) {
     const {author, title, body, topic,article_img_url} = queryBody;
     const greenList = ["author", "title", "body", "topic", "article_img_url"]
     if (Object.keys(queryBody).some(key => !greenList.includes(key))) {
-        return Promise.reject({ status: 400, msg: "Bad Request" });
+        return Promise.reject({ status: 400, msg: "Bad Request"});
     }
+    return fetchUserByUsername(author).then((rows)=>{
+        if(rows.length === 0){
+            return Promise.reject({ status: 400, msg: "Author Not Exist"});
+        }
+        else {
+            return fetchTopicByTopic(topic).then((rows)=>{
+                if(rows.length === 0){
+                    return Promise.reject({ status: 400, msg: "Topic Not Exist"});
+                }
+                else {
+                    if(!article_img_url){
+                        return db.query("INSERT INTO articles (author,title,body,topic) VALUES ($1,$2,$3,$4) RETURNING *",
+                            [author, title, body, topic]).then(({rows}) => {
+                            return fetchArticleById(rows[0].article_id).then((article) => {
+                                return article;
+                            })
+                        })
+                    }
+                    else {
+                        return db.query("INSERT INTO articles (author,title,body,topic,article_img_url) VALUES ($1,$2,$3,$4) RETURNING *",
+                            [author, title, body, topic,article_img_url]).then(({rows}) => {
+                            return fetchArticleById(rows[0].article_id).then((article) => {
+                                return article;
+                            })
+                        })
+                    }
+                }
+            })
+        }
 
-    return fetchUserByUsername(author).then(({rows})=>{
-        return fetchTopicByTopic(topic).then(({rows})=>{
-            if(!article_img_url){
-                return db.query("INSERT INTO articles (author,title,body,topic) VALUES ($1,$2,$3,$4) RETURNING *",
-                    [author, title, body, topic]).then(({rows}) => {
-                    return fetchArticleById(rows[0].article_id).then((article) => {
-                        return article;
-                    })
-                })
-            }
-            else {
-                return db.query("INSERT INTO articles (author,title,body,topic,article_img_url) VALUES ($1,$2,$3,$4) RETURNING *",
-                    [author, title, body, topic,article_img_url]).then(({rows}) => {
-                    return fetchArticleById(rows[0].article_id).then((article) => {
-                        return article;
-                    })
-                })
-            }
-        })
     })
 
 }

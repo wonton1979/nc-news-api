@@ -878,3 +878,40 @@ describe("POST /api/articles/", () => {
         })
     })
 })
+
+describe("POST /api/topics/", () => {
+    describe("Functionality Test", () => {
+        test("201 : Post a new topic",()=>{
+            return request(app)
+                .post("/api/topics")
+                .send({slug: 'UK Weather',description:'Raining and Cold in Winter'})
+                .expect(201)
+                .then(({body:{new_topic}})=>{
+                    expect(new_topic[0].slug).toBe('UK Weather');
+                    expect(new_topic[0].description).toBe('Raining and Cold in Winter');
+                    expect(new_topic[0].img_url).toBe("");
+                });
+        })
+    })
+
+    describe("Error Handling Test", () => {
+        test("POST 400: Testing if slug already exist",()=>{
+            return request(app)
+                .post("/api/topics")
+                .send({slug: 'mitch',description:'Raining and Cold in Winter'})
+                .expect(400)
+                .then(({body})=>{
+                    expect(body.msg).toBe('This topic already exist');
+                })
+        })
+        test("GET 400: Testing if wrong data type in object",()=>{
+            return request(app)
+                .post("/api/articles")
+                .send({slug:8888,description:'Raining and Cold in Winter'})
+                .expect(400)
+                .then(({body})=>{
+                    expect(body.msg).toBe('Bad Request');
+                })
+        })
+    })
+})
