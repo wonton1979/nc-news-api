@@ -915,3 +915,34 @@ describe("POST /api/topics/", () => {
         })
     })
 })
+
+describe("DELETE /api/articles/:article_id", () => {
+    describe("Functionality Test", () => {
+        test("204 : Delete article by using article id",()=>{
+            return request(app)
+                .delete("/api/articles/2")
+                .expect(204)
+                .then(({body})=> {
+                    expect(body).toMatchObject({});
+                })
+        })
+    })
+    describe("Error Handling Test", () => {
+        test("DELETE 404: Testing if no article found which related to the article_id", () => {
+            return request(app)
+                .delete("/api/articles/9999")
+                .expect(404)
+                .then(({body}) => {
+                    expect(body.msg).toBe('No articles found with this id.');
+                })
+        })
+        test("DELETE 400: Testing if data type of article_id passed in is wrong", () => {
+            return request(app)
+                .delete("/api/articles/apple")
+                .expect(400)
+                .then(({body}) => {
+                    expect(body.msg).toBe('Bad Request');
+                })
+        })
+    })
+})

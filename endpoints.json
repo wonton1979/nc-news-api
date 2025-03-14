@@ -136,7 +136,21 @@
             }
           ]
     }
-  }
+  },
 
+  "POST /api/topics": {
+    "description": "Insert a new topic into topics table",
+    "queries": ["slug", "description"],
+    "exampleResponse": {
+      "new_article":
+      [
+        {
+          "slug": "UK Weather",
+          "description": "Raining and Cold in Winter",
+          "img_url": ""
+        }
+      ]
+    }
+  }
 
 }

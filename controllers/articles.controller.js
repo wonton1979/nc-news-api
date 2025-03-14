@@ -1,4 +1,4 @@
-const {fetchArticleById,fetchAllArticles,updateArticleById,insertNewArticle} = require('../models/articles.model')
+const {fetchArticleById,fetchAllArticles,updateArticleById,insertNewArticle,dropArticleByArticleId} = require('../models/articles.model')
 
 
 exports.getArticleById = (request, response,next) => {
@@ -34,4 +34,13 @@ exports.postNewArticle= (request, response, next) => {
     }).catch((error)=>{
         next(error);
     });
+}
+
+exports.deleteArticleByArticleId = (request, response,next) => {
+    const {article_id} = request.params;
+    dropArticleByArticleId(article_id).then(()=>{
+        response.status(204).send()
+    }).catch((error)=>{
+        next(error);
+    })
 }

@@ -189,4 +189,12 @@ function insertNewArticle(queryBody) {
 
 }
 
-module.exports = {fetchArticleById,fetchAllArticles,updateArticleById,insertNewArticle};
+function dropArticleByArticleId(articleId) {
+    return fetchArticleById(articleId).then((rows) => {
+        return db.query("DELETE FROM articles WHERE article_id = $1 RETURNING *", [articleId]).then(({rows}) => {
+            return rows;
+        })
+    })
+}
+
+module.exports = {fetchArticleById,fetchAllArticles,updateArticleById,insertNewArticle,dropArticleByArticleId};
