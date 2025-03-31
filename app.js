@@ -8,6 +8,9 @@ const {customErrorController,serverErrorController,psqlErrorController} = requir
 const commentsRoutes = require("./routes/comments-rounter");
 const usersRoutes = require("./routes/users-router");
 const apiRoutes = require("./routes/api-router");
+const cors = require("cors");
+
+app.use(cors());
 
 app.use(express.json());
 
