@@ -36,7 +36,7 @@ function fetchAllArticles (queryData)  {
                 return Promise.reject({status: 400, msg: 'Bad Request'})
             }
         }
-        const propertyQueryAllowed = ['article_id','author','title','created_at','votes','article_img_url','body','topic'];
+        const propertyQueryAllowed = ['article_id','author','title','created_at','votes','article_img_url','body','topic','comment_count'];
         let queryStr = "SELECT articles.*,(SELECT COUNT(*) FROM comments WHERE article_id = articles.article_id) AS comment_count FROM articles";
         const valueList = [];
         let valuesCounter = 0;
