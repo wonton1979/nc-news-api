@@ -37,7 +37,7 @@ function fetchAllArticles (queryData)  {
             }
         }
         const propertyQueryAllowed = ['article_id','author','title','created_at','votes','article_img_url','body','topic'];
-        let queryStr = "SELECT * FROM articles";
+        let queryStr = "SELECT articles.*,(SELECT COUNT(*) FROM comments WHERE article_id = articles.article_id) AS comment_count FROM articles";
         const valueList = [];
         let valuesCounter = 0;
         const propertyQueryList = propertyQueryAllowed.filter((eachProperty)=>{
